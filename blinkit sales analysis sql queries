@@ -1,0 +1,158 @@
+
+--Query 1: Sales by Item Type
+SELECT 
+    Item_Type,
+    SUM(Sales) AS Total_Sales
+FROM blinkit_sales
+GROUP BY Item_Type
+ORDER BY Total_Sales DESC;
+
+--Insight: Identifies top-performing product categories.
+
+--Query 2: Sales by Outlet Size
+SELECT 
+    Outlet_Size,
+    SUM(Sales) AS Total_Sales
+FROM blinkit_sales
+GROUP BY Outlet_Size
+ORDER BY Total_Sales DESC;
+
+--Insight: Determines which outlet size generates highest revenue.
+
+--Query 3: Sales by Outlet Location
+SELECT 
+    Outlet_Location_Type,
+    SUM(Sales) AS Total_Sales
+FROM blinkit_sales
+GROUP BY Outlet_Location_Type
+ORDER BY Total_Sales DESC;
+
+--Insight: Compares performance across locations.
+
+--Query 4: Sales by Fat Content
+SELECT 
+    Item_Fat_Content,
+    SUM(Sales) AS Total_Sales,
+    AVG(Sales) AS Average_Sales,
+    COUNT(*) AS Number_of_Items
+FROM blinkit_sales
+GROUP BY Item_Fat_Content;
+
+--Insight: Analyzes customer preference based on fat content.
+
+--Query 5: Sales by Outlet Type
+SELECT 
+    Outlet_Type,
+    SUM(Sales) AS Total_Sales,
+    AVG(Sales) AS Avg_Sales,
+    COUNT(*) AS Items_Sold
+FROM blinkit_sales
+GROUP BY Outlet_Type
+ORDER BY Total_Sales DESC;
+
+--Insight: Identifies best-performing outlet types.
+
+--Query 6: Sales Trend by Establishment Year
+SELECT 
+    Outlet_Establishment_Year,
+    SUM(Sales) AS Total_Sales
+FROM blinkit_sales
+GROUP BY Outlet_Establishment_Year
+ORDER BY Outlet_Establishment_Year;
+
+--Insight: Shows performance of outlets based on age.
+
+--Query 7: Top 3 Item Types contributing highest revenue (using Window Function)
+WITH item_sales AS (
+    SELECT 
+        Item_Type,
+        SUM(Sales) AS total_sales
+    FROM blinkit_sales
+    GROUP BY Item_Type
+),
+ranked_items AS (
+    SELECT *,
+           RANK() OVER (ORDER BY total_sales DESC) AS rank_num
+    FROM item_sales
+)
+SELECT *
+FROM ranked_items
+WHERE rank_num <= 3;
+
+--Insight: Identifies highest revenue-generating product categories.
+
+--Query 8: Revenue Contribution % by Outlet Type
+WITH total AS (
+    SELECT SUM(Sales) AS total_revenue
+    FROM blinkit_sales
+)
+SELECT 
+    Outlet_Type,
+    SUM(Sales) AS outlet_revenue,
+    ROUND(SUM(Sales) * 100.0 / (SELECT total_revenue FROM total), 2) AS contribution_percent
+FROM blinkit_sales
+GROUP BY Outlet_Type
+ORDER BY contribution_percent DESC;
+
+--Insight: Shows which outlet types drive most revenue.
+
+--Query 9: Identify Underperforming Outlets (Below Average Revenue)
+WITH outlet_sales AS (
+    SELECT 
+        Outlet_Identifier,
+        SUM(Sales) AS total_sales
+    FROM blinkit_sales
+    GROUP BY Outlet_Identifier
+),
+avg_sales AS (
+    SELECT AVG(total_sales) AS avg_revenue
+    FROM outlet_sales
+)
+SELECT *
+FROM outlet_sales
+WHERE total_sales < (SELECT avg_revenue FROM avg_sales)
+ORDER BY total_sales;
+
+--Insight: Helps identify outlets needing improvement.
+
+--Query 10: Running Total of Sales Over Outlet Establishment Year
+SELECT 
+    Outlet_Establishment_Year,
+    SUM(Sales) AS yearly_sales,
+    SUM(SUM(Sales)) OVER (ORDER BY Outlet_Establishment_Year) AS running_total
+FROM blinkit_sales
+GROUP BY Outlet_Establishment_Year;
+
+--Insight: Shows business growth trend over time.
+
+--Query 11: Rank Outlets Within Each Location by Sales
+SELECT 
+    Outlet_Location_Type,
+    Outlet_Identifier,
+    SUM(Sales) AS total_sales,
+    RANK() OVER (
+        PARTITION BY Outlet_Location_Type
+        ORDER BY SUM(Sales) DESC
+    ) AS location_rank
+FROM blinkit_sales
+GROUP BY Outlet_Location_Type, Outlet_Identifier;
+
+--Insight: Identifies top outlet per city tier.
+
+--Query 12: Find High-Value vs Low-Value Products (Segmentation)
+WITH avg_sales AS (
+    SELECT AVG(Sales) AS avg_value
+    FROM blinkit_sales
+)
+SELECT 
+    Item_Type,
+    CASE
+        WHEN AVG(Sales) > (SELECT avg_value FROM avg_sales)
+        THEN 'High Value'
+        ELSE 'Low Value'
+    END AS product_segment,
+    AVG(Sales) AS avg_sales
+FROM blinkit_sales
+GROUP BY Item_Type;
+
+--Insight: Helps prioritize premium vs low-value products.
