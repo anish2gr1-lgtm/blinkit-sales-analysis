@@ -29,7 +29,7 @@ This project analyzes Blinkit grocery sales data using SQL and Power BI to ident
 - Analyzed sales performance by location and outlet size
 
 ## Dashboard Preview
-![Dashboard](images/dashboard_overview.png)
+- <a href="https://github.com/anish2gr1-lgtm/blinkit-sales-analysis/blob/main/powerbi%20dashboard.pbix">Dashboard</a>
 
 ## Files Included
 - SQL queries
